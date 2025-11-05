@@ -1,0 +1,148 @@
+HouseFashion/
+├── backend/
+│   ├── app.js
+│   ├── package.json
+│   └── routes/
+│       ├── products.js
+│       └── checkout.js
+├── frontend/
+│   ├── index.html
+│   ├── shop.html
+│   ├── script.js
+│   └── style.css
+├── .env
+└── README.md
+{
+  "name": "housefashion-backend",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "stripe": "^12.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
+  }
+}
+
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const productsRoute = require('./routes/products');
+const checkoutRoute = require('./routes/checkout');
+
+dotenv.config();
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/products', productsRoute);
+app.use('/api/checkout', checkoutRoute);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const express = require('express');
+const router = express.Router();
+const products = [
+  { id: 1, name: "Черно-златно палто", price: 120 },
+  { id: 2, name: "Стилна риза", price: 60 },
+  { id: 3, name: "Елегантна пола", price: 80 }
+];
+
+router.get('/', (req, res) => {
+  res.json(products);
+});
+
+module.exports = router;
+
+const express = require('express');
+const router = express.Router();
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+router.post('/', async (req, res) => {
+  const { items } = req.body;
+  const line_items = items.map(i => ({
+    price_data: {
+      currency: 'eur',
+      product_data: { name: i.name },
+      unit_amount: i.price * 100
+    },
+    quantity: 1
+  }));
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items,
+    mode: 'payment',
+    success_url: `${req.headers.origin}/frontend/index.html?success=true`,
+    cancel_url: `${req.headers.origin}/frontend/index.html?canceled=true`
+  });
+  res.json({ url: session.url });
+});
+
+module.exports = router;
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<title>House Fashion</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Добре дошли в House Fashion</h1>
+<a href="shop.html">Виж магазина</a>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<title>Магазин - House Fashion</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Магазин</h1>
+<div id="products"></div>
+<script src="script.js"></script>
+</body>
+</html>
+
+fetch('http://localhost:5000/api/products')
+.then(res => res.json())
+.then(data => {
+  const container = document.getElementById('products');
+  data.forEach(p => {
+    const div = document.createElement('div');
+    div.innerHTML = `<strong>${p.name}</strong> - ${p.price} EUR <button onclick="buy('${p.name}', ${p.price})">Купи</button>`;
+    container.appendChild(div);
+  });
+});
+
+function buy(name, price) {
+  fetch('http://localhost:5000/api/checkout', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({items:[{name,price}]})
+  })
+  .then(res => res.json())
+  .then(data => window.location.href = data.url);
+}
+
+body { background: black; color: gold; font-family: Arial, sans-serif; }
+h1 { text-align: center; margin-top: 50px; }
+div { margin: 20px; padding: 10px; border: 1px solid gold; }
+button { background: gold; color: black; padding: 5px 10px; border: none; cursor: pointer; }
+
+STRIPE_PUBLISHABLE_KEY=твоя_publishable_key
+STRIPE_SECRET_KEY=твоя_secret_key
+CONTACT_EMAIL=yordanyordanov910@gmail.com
+
+# House Fashion
+Онлайн магазин за дрехи с черно-златен стил. 
+Създаден с Node.js, Express, HTML, CSS и Stripe Checkout.
+
+
