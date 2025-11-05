@@ -137,12 +137,6 @@ h1 { text-align: center; margin-top: 50px; }
 div { margin: 20px; padding: 10px; border: 1px solid gold; }
 button { background: gold; color: black; padding: 5px 10px; border: none; cursor: pointer; }
 
-STRIPE_PUBLISHABLE_KEY=твоя_publishable_key
-STRIPE_SECRET_KEY=твоя_secret_key
-CONTACT_EMAIL=yordanyordanov910@gmail.com
 
-# House Fashion
-Онлайн магазин за дрехи с черно-златен стил. 
-Създаден с Node.js, Express, HTML, CSS и Stripe Checkout.
 
 
